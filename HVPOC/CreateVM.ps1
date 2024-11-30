@@ -1,7 +1,7 @@
 $vmPath = "C:\VM\bootstrapper"  
 $ubuIso = "C:\_ISO\ubuntu-24.04-live-server-amd64.iso"
 $oscdimg = "C:\Program Files (x86)\Windows Kits\10\Assessment and Deployment Kit\Deployment Tools\amd64\Oscdimg\oscdimg.exe"
-$ubuVhdx = "C:\temp\ubuvhd-20240712\ubuntu-22.04-server-cloudimg-amd64.vhdx"
+$ubuVhdx = "C:\temp\ubuvhd\ubuntu-24.04-server-cloudimg-amd64.vhdx"
 
 #vm spec
 $vm = @(
@@ -12,13 +12,13 @@ $vm = @(
         DiskSize = 32GB
         Networks = @(
             @{
-                SwitchName = "Internet"
+                SwitchName = "vsw-WAN"
                 AdapterName = "WAN"
                 VlanId = 0
                 MacSpoofing = $false
             },
             @{
-                SwitchName = "LAN"
+                SwitchName = "vsw-LAN"
                 AdapterName = "LAN"
                 VlanId = 0
                 MacSpoofing = $false
@@ -30,6 +30,8 @@ network:
     ethernets:
         eth0:
             dhcp4: true
+            nameservers:
+                addresses: [192.168.174.1]
         eth1:
             addresses:
                 - 192.168.10.1/24
@@ -49,7 +51,7 @@ users:
     shell: /bin/bash
     lock_passwd: false
     ssh_authorized_keys:
-      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCbMZ9wnJ90U963cv10EdX1/+5kX/CleXILADYEnOoX8+doNIT1WJX09Uiqgnl/QFoi7haxDUNwnCnm1WBBRsaMI/nH8P2rzgIMb9z6AvjHEdB10iPgMCpGXpTRzpM0lxQ/mPP+E0pAVRbsZHljh1qpFR/FO7JZDz1wDFRcWWlSmj9VN3sBt2K78kMQm4bcR96jI4nlhINgRStCAxCn/d8lcDMDjWSGig4gH/xtk2CFLElJQqHUqfNx/GV0/5XgVKtapoLYDychQYi9DBpdGmSmYapaV4CAdglyUZ6CiuG2bFiKsA+qzD0IiHUlXMPZ77emLXidqrSwn1TCvbR1ksT rsa-key-20240718
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCmktBaqfCDw8cY9lchNRhP/o69wvXhXkTVmf/s53rouyeYetVJ/0viuDSOzpkTK3m1it5svIabCFx1PiHiwQ5HgiJQaliKjDiAhDygfJGrZIfsDMeU1NBALZNVOxpcZZEXdzy9wnV62r+IYntAVballsLrK7nYighTNJUpgB6FtgiAUFI0+G7ZTvsJOrOmB17G9pEDQkJg9eeIRCbKvxwPDdshmEHvdfKtlajC5S2v5GRXC9127gvZCFyG5n+vOV1vf12ugFQEGvBzqoSIMK9sfyYSHSPJyt+bnHZqp1K0W3HqFP2FgDQbWZOPsrN4xrMUkRGtuhP2by5950gC8rdV rsa-key-20241113
 
 runcmd:
   - sysctl -w net.ipv4.ip_forward=1
@@ -64,13 +66,13 @@ runcmd:
         DiskSize = 32GB
         Networks = @(
             @{
-                SwitchName = "LAN"
+                SwitchName = "vsw-LAN"
                 AdapterName = "LAN01"
                 VlanId = 0
                 MacSpoofing = $true
             },
             @{
-                SwitchName = "LAN"
+                SwitchName = "vsw-LAN"
                 AdapterName = "LAN02"
                 VlanId = 0 
                 MacSpoofing = $true
@@ -117,7 +119,7 @@ users:
     shell: /bin/bash
     lock_passwd: false
     ssh_authorized_keys:
-      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCbMZ9wnJ90U963cv10EdX1/+5kX/CleXILADYEnOoX8+doNIT1WJX09Uiqgnl/QFoi7haxDUNwnCnm1WBBRsaMI/nH8P2rzgIMb9z6AvjHEdB10iPgMCpGXpTRzpM0lxQ/mPP+E0pAVRbsZHljh1qpFR/FO7JZDz1wDFRcWWlSmj9VN3sBt2K78kMQm4bcR96jI4nlhINgRStCAxCn/d8lcDMDjWSGig4gH/xtk2CFLElJQqHUqfNx/GV0/5XgVKtapoLYDychQYi9DBpdGmSmYapaV4CAdglyUZ6CiuG2bFiKsA+qzD0IiHUlXMPZ77emLXidqrSwn1TCvbR1ksT rsa-key-20240718
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCmktBaqfCDw8cY9lchNRhP/o69wvXhXkTVmf/s53rouyeYetVJ/0viuDSOzpkTK3m1it5svIabCFx1PiHiwQ5HgiJQaliKjDiAhDygfJGrZIfsDMeU1NBALZNVOxpcZZEXdzy9wnV62r+IYntAVballsLrK7nYighTNJUpgB6FtgiAUFI0+G7ZTvsJOrOmB17G9pEDQkJg9eeIRCbKvxwPDdshmEHvdfKtlajC5S2v5GRXC9127gvZCFyG5n+vOV1vf12ugFQEGvBzqoSIMK9sfyYSHSPJyt+bnHZqp1K0W3HqFP2FgDQbWZOPsrN4xrMUkRGtuhP2by5950gC8rdV rsa-key-20241113
 
 package_update: true
 package_upgrade: true
@@ -125,7 +127,7 @@ package_reboot_if_required: true
 
 bootcmd:
   - echo 192.168.10.1 uburouter >> /etc/hosts
-  - echo 192.168.10.2 puckard >> /etc/hosts
+  - echo 192.168.10.2 ace >> /etc/hosts
   - echo 192.168.10.10 ubu01 >> /etc/hosts
   - echo 192.168.10.20 ubu02 >> /etc/hosts
   - echo 192.168.10.30 ubu03 >> /etc/hosts
@@ -143,13 +145,13 @@ runcmd:
         DiskSize = 32GB
         Networks = @(
             @{
-                SwitchName = "LAN"
+                SwitchName = "vsw-LAN"
                 AdapterName = "LAN01"
                 VlanId = 0
                 MacSpoofing = $true
             },
             @{
-                SwitchName = "LAN"
+                SwitchName = "vsw-LAN"
                 AdapterName = "LAN02"
                 VlanId = 0 
                 MacSpoofing = $true
@@ -196,7 +198,7 @@ users:
     shell: /bin/bash
     lock_passwd: false
     ssh_authorized_keys:
-      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCbMZ9wnJ90U963cv10EdX1/+5kX/CleXILADYEnOoX8+doNIT1WJX09Uiqgnl/QFoi7haxDUNwnCnm1WBBRsaMI/nH8P2rzgIMb9z6AvjHEdB10iPgMCpGXpTRzpM0lxQ/mPP+E0pAVRbsZHljh1qpFR/FO7JZDz1wDFRcWWlSmj9VN3sBt2K78kMQm4bcR96jI4nlhINgRStCAxCn/d8lcDMDjWSGig4gH/xtk2CFLElJQqHUqfNx/GV0/5XgVKtapoLYDychQYi9DBpdGmSmYapaV4CAdglyUZ6CiuG2bFiKsA+qzD0IiHUlXMPZ77emLXidqrSwn1TCvbR1ksT rsa-key-20240718
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCmktBaqfCDw8cY9lchNRhP/o69wvXhXkTVmf/s53rouyeYetVJ/0viuDSOzpkTK3m1it5svIabCFx1PiHiwQ5HgiJQaliKjDiAhDygfJGrZIfsDMeU1NBALZNVOxpcZZEXdzy9wnV62r+IYntAVballsLrK7nYighTNJUpgB6FtgiAUFI0+G7ZTvsJOrOmB17G9pEDQkJg9eeIRCbKvxwPDdshmEHvdfKtlajC5S2v5GRXC9127gvZCFyG5n+vOV1vf12ugFQEGvBzqoSIMK9sfyYSHSPJyt+bnHZqp1K0W3HqFP2FgDQbWZOPsrN4xrMUkRGtuhP2by5950gC8rdV rsa-key-20241113
 
 package_update: true
 package_upgrade: true
@@ -204,7 +206,7 @@ package_reboot_if_required: true
 
 bootcmd:
   - echo 192.168.10.1 uburouter >> /etc/hosts
-  - echo 192.168.10.2 puckard >> /etc/hosts
+  - echo 192.168.10.2 ace >> /etc/hosts
   - echo 192.168.10.10 ubu01 >> /etc/hosts
   - echo 192.168.10.20 ubu02 >> /etc/hosts
   - echo 192.168.10.30 ubu03 >> /etc/hosts
@@ -221,13 +223,13 @@ runcmd:
         DiskSize = 32GB
         Networks = @(
             @{
-                SwitchName = "LAN"
+                SwitchName = "vsw-LAN"
                 AdapterName = "LAN01"
                 VlanId = 0
                 MacSpoofing = $true
             },
             @{
-                SwitchName = "LAN"
+                SwitchName = "vsw-LAN"
                 AdapterName = "LAN02"
                 VlanId = 0 
                 MacSpoofing = $true
@@ -264,7 +266,7 @@ users:
     shell: /bin/bash
     lock_passwd: false
     ssh_authorized_keys:
-      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDCbMZ9wnJ90U963cv10EdX1/+5kX/CleXILADYEnOoX8+doNIT1WJX09Uiqgnl/QFoi7haxDUNwnCnm1WBBRsaMI/nH8P2rzgIMb9z6AvjHEdB10iPgMCpGXpTRzpM0lxQ/mPP+E0pAVRbsZHljh1qpFR/FO7JZDz1wDFRcWWlSmj9VN3sBt2K78kMQm4bcR96jI4nlhINgRStCAxCn/d8lcDMDjWSGig4gH/xtk2CFLElJQqHUqfNx/GV0/5XgVKtapoLYDychQYi9DBpdGmSmYapaV4CAdglyUZ6CiuG2bFiKsA+qzD0IiHUlXMPZ77emLXidqrSwn1TCvbR1ksT rsa-key-20240718
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCmktBaqfCDw8cY9lchNRhP/o69wvXhXkTVmf/s53rouyeYetVJ/0viuDSOzpkTK3m1it5svIabCFx1PiHiwQ5HgiJQaliKjDiAhDygfJGrZIfsDMeU1NBALZNVOxpcZZEXdzy9wnV62r+IYntAVballsLrK7nYighTNJUpgB6FtgiAUFI0+G7ZTvsJOrOmB17G9pEDQkJg9eeIRCbKvxwPDdshmEHvdfKtlajC5S2v5GRXC9127gvZCFyG5n+vOV1vf12ugFQEGvBzqoSIMK9sfyYSHSPJyt+bnHZqp1K0W3HqFP2FgDQbWZOPsrN4xrMUkRGtuhP2by5950gC8rdV rsa-key-20241113
 
 package_update: true
 package_upgrade: true
@@ -272,7 +274,7 @@ package_reboot_if_required: true
 
 bootcmd:
   - echo 192.168.10.1 uburouter >> /etc/hosts
-  - echo 192.168.10.2 puckard >> /etc/hosts
+  - echo 192.168.10.2 ace >> /etc/hosts
   - echo 192.168.10.10 ubu01 >> /etc/hosts
   - echo 192.168.10.20 ubu02 >> /etc/hosts
   - echo 192.168.10.30 ubu03 >> /etc/hosts
