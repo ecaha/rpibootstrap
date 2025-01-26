@@ -1,0 +1,6 @@
+sudo pcs resource create ms_drbd_ha_nfs ocf:linbit:drbd \
+        op monitor interval=60s role=Master \
+        op monitor interval=120s role=Slave
+
+sudo pcs resource promotable ms_drbd_ha_nfs \
+        master-max=1 master-node-max=1 clone-max=3 clone-node-max=1 notify=true

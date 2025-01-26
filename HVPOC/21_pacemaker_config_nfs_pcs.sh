@@ -1,9 +1,80 @@
 # Configure cluster properties
-sudo pcs property set stonith-enabled=false
+# sudo pcs property set stonith-enabled=false
 
 # Configure resource stickiness
 sudo pcs resource defaults update resource-stickiness=200
 
+sudo pcs cluster cib drbdconf
+
+# Configure DRBD resource for high availability NFS
+sudo pcs -f drbdconf resource create p_drbd_ha_nfs ocf:linbit:drbd \
+    drbd_resource=ha_nfs \
+    op start interval=0s timeout=240s \
+    op stop interval=0s timeout=100s \
+    op monitor timeout=20 interval=21 role=Unpromoted \
+    op monitor timeout=20 interval=20 role=Promoted
+
+sudo pcs -f drbdconf resource promotable p_drbd_ha_nfs \
+           promoted-max=1 promoted-node-max=1 \
+           clone-max=3 clone-node-max=1 notify=true
+
+sudo pcs cluster cib-push drbdconf
+
+sudo pcs -f drbdconf resource create p_fs_nfsshare_exports_HA ocf:heartbeat:Filesystem \
+    device="/dev/drbd1003" \
+    directory="/nfsshare/exports/HA" \
+    fstype=ext4 \
+    run_fsck=no \
+    op monitor interval=15s timeout=40s OCF_CHECK_LEVEL=0 \
+    op start interval=0s timeout=60s \
+    op stop interval=0s timeout=60s
+
+# Configure order constraint for DRBD promotion before NFS start
+sudo pcs -f drbdconf constraint order promote p_drbd_ha_nfs-clone then start p_fs_nfsshare_exports_HA
+
+sudo pcs -f drbdconf constraint colocation add p_fs_nfsshare_exports_HA with p_drbd_ha_nfs-clone INFINITY with-rsc-role=Promoted
+
+sudo pcs cluster cib-push drbdconf
+
+sudo pcs -f drbdconf resource create p_nfsserver ocf:heartbeat:nfsserver \
+    nfs_shared_infodir=/nfsshare/exports/HA/nfs_shared_infodir nfs_ip=192.168.10.100 \
+    op start interval=0s timeout=40s \
+    stop interval=0s timeout=20s \
+    monitor interval=10s timeout=20s
+
+sudo pcs -f drbdconf constraint colocation add p_nfsserver with p_fs_nfsshare_exports_HA INFINITY
+sudo pcs -f drbdconf constraint order p_fs_nfsshare_exports_HA then p_nfsserver
+
+sudo pcs cluster cib-push drbdconf
+
+sudo pcs  -f drbdconf resource create p_expfs_nfsshare_exports_HA ocf:heartbeat:exportfs \
+    clientspec="192.168.10.0/24" \
+    directory="/nfsshare/exports/HA/dir1" \
+    fsid=1003 unlock_on_stop=1 options=rw,sync \
+    op monitor interval=15s timeout=40s OCF_CHECK_LEVEL=0 \
+    op start interval=0s timeout=40s \
+    op stop interval=0s timeout=120s
+
+sudo pcs -f drbdconf constraint order p_nfsserver then p_expfs_nfsshare_exports_HA
+sudo pcs -f drbdconf constraint colocation add p_expfs_nfsshare_exports_HA with p_nfsserver INFINITY
+
+sudo pcs cluster cib-push drbdconf
+
+sudo pcs -f drbdconf resource create p_virtip ocf:heartbeat:IPaddr2 \
+    ip=192.168.10.100 \
+    cidr_netmask=24 \
+    op monitor interval=0s timeout=40s \
+    op start interval=0s timeout=20s \
+    op stop interval=0s timeout=20s
+
+ sudo pcs -f drbdconf constraint order p_expfs_nfsshare_exports_HA then  p_virtip
+ sudo pcs -f drbdconf constraint colocation add p_virtip with p_expfs_nfsshare_exports_HA INFINITY
+
+sudo pcs cluster cib-push drbdconf
+
+#todo: configure port blocking and unblocking
+
+#--------------------------------
 # Configure virtual IP address
 sudo pcs resource create p_virtip ocf:heartbeat:IPaddr2 \
     ip=192.168.10.100 \
@@ -12,17 +83,13 @@ sudo pcs resource create p_virtip ocf:heartbeat:IPaddr2 \
     op start interval=0s timeout=20s \
     op stop interval=0s timeout=20s
 
-# Configure DRBD resource for high availability NFS
-sudo pcs resource create p_drbd_ha_nfs ocf:linbit:drbd \
-    drbd_resource=ha_nfs \
-    op monitor timeout=20 interval=21 role=Unpromoted \
-    op monitor timeout=20 interval=20 role=Promoted
+
 
 # Configure NFS export for HA
 sudo pcs resource create p_expfs_nfsshare_exports_HA ocf:heartbeat:exportfs \
     clientspec="192.168.10.0/24" \
-    directory="/nfsshare/exports/HA" \
-    fsid=1003 unlock_on_stop=1 options=rw \
+    directory="/nfsshare/exports/HA/dir1" \
+    fsid=1003 unlock_on_stop=1 options=rw,sync \
     op monitor interval=15s timeout=40s OCF_CHECK_LEVEL=0 \
     op start interval=0s timeout=40s \
     op stop interval=0s timeout=120s

@@ -2,6 +2,7 @@ $vmPath = "C:\VM\bootstrapper"
 $ubuIso = "C:\_ISO\ubuntu-24.04-live-server-amd64.iso"
 $oscdimg = "C:\Program Files (x86)\Windows Kits\10\Assessment and Deployment Kit\Deployment Tools\amd64\Oscdimg\oscdimg.exe"
 $ubuVhdx = "C:\temp\ubuvhd\ubuntu-24.04-server-cloudimg-amd64.vhdx"
+$scriptsPath = "C:\VM\bootstrapper\scripts"
 
 #vm spec
 $vm = @(
@@ -99,7 +100,9 @@ network:
     bonds:
         bond0:
             interfaces: [eth0, eth1]
-            addresses: [192.168.10.10/24]
+            addresses: 
+              - 192.168.10.10/24
+              - 172.16.0.10/24
             gateway4: 192.168.10.1
             nameservers:
                 addresses: [8.8.8.8]
@@ -178,7 +181,9 @@ network:
     bonds:
         bond0:
             interfaces: [eth0, eth1]
-            addresses: [192.168.10.20/24]
+            addresses: 
+              - 192.168.10.20/24
+              - 172.16.0.20/24
             gateway4: 192.168.10.1
             nameservers:
                 addresses: [8.8.8.8]
@@ -246,7 +251,9 @@ network:
     bonds:
         bond0:
             interfaces: [eth0, eth1]
-            addresses: [192.168.10.30/24]
+            addresses: 
+              - 192.168.10.30/24
+              - 172.16.0.30/24
             gateway4: 192.168.10.1
             nameservers:
                 addresses: [8.8.8.8]
@@ -326,6 +333,8 @@ $vm | ForEach-Object {
    # New-Item -Path "$vmPathloc\meta-data" -ItemType File -Value $metadata 
     $metadata | Out-File -FilePath "$vmPathloc\meta-data" -Encoding ascii
     $netConfVM | Out-File -FilePath "$vmPathloc\network-config" -Encoding ascii
+    # Copy sripts from the scripts directory to the VM directory
+    Copy-Item -Path $scriptsPath -Destination $vmPathloc -Recurse -Force
 }
 
 #create ISO for each VM
@@ -367,17 +376,17 @@ foreach ($vmSpec in $vm) {
     Start-VM -Name $vmSpec.Name
 }
  
- The script creates a VM with the following specs: 
+#  The script creates a VM with the following specs: 
  
- Name: ubu01 
- Memory: 4GB 
- CPU: 4 
- DiskSize: 32GB 
- Networks: sLAN with VLAN 100 
- DataDisks: Data01 and Data02 with 100GB each 
+#  Name: ubu01 
+#  Memory: 4GB 
+#  CPU: 4 
+#  DiskSize: 32GB 
+#  Networks: sLAN with VLAN 100 
+#  DataDisks: Data01 and Data02 with 100GB each 
  
- The script creates a cloud-init user-data and meta-data file for each VM in the  cidata  directory. It then creates an ISO file for each VM using the  oscdimg  tool. 
- Finally, the script creates the VM, boots from the Ubuntu ISO, attaches the cloud-init ISO, adds the data disks and networks, and sets the CPU count
+#  The script creates a cloud-init user-data and meta-data file for each VM in the  cidata  directory. It then creates an ISO file for each VM using the  oscdimg  tool. 
+#  Finally, the script creates the VM, boots from the Ubuntu ISO, attaches the cloud-init ISO, adds the data disks and networks, and sets the CPU count
 
 
 #cehck if vm exists, shutdown and remove, remove files

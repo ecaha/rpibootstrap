@@ -1,0 +1,1 @@
+sudo drbdadm up ha_nfs
